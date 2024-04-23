@@ -1,0 +1,25 @@
+<?xml version="1.0"?>
+<!DOCTYPE hibernate-mapping PUBLIC
+        "-//Hibernate/Hibernate Mapping DTD 3.0//EN"
+        "http://www.hibernate.org/dtd/hibernate-configuration-3.0.dtd">
+<hibernate-mapping>
+    <class name="com.mca.domain.VideoGameSaga" table="VIDEOGAME_SAGA">
+        <id name="id" type="java.lang.Integer">
+            <column name="ID" />
+            <generator class="identity" />
+        </id>
+        <property name="title" type="string">
+            <column name="TITLE" not-null="true" />
+        </property>
+        <set name="videoGames" table="VIDEOGAME" inverse="true" cascade="all">
+            <key>
+                <column name="SAGA_ID" not-null="true" />
+            </key>
+            <one-to-many class="com.mca.domain.VideoGame" />
+        </set>
+        <set name="relatedSagas" table="SAGA_RELATIONSHIP">
+            <key column="SAGA_ID_1"/>
+            <many-to-many column="SAGA_ID_2" class="com.mca.domain.VideoGameSaga"/>
+        </set>
+    </class>
+</hibernate-mapping>

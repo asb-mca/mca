@@ -1,0 +1,101 @@
+version: '3'
+
+services:
+  simulado:
+    image : ldabiralai/simulado:latest
+    ports:
+      - "3000:80"
+    volumes:
+      - ./mock:/app
+    command: ./bin/simulado -f /app/mock_data.json
+
+  mca-backend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: mca-backend
+    ports:
+      - "8080:8080"
+    environment:
+      - SPRING_KAFKA_CONSUMER_BOOTSTRAP_SERVERS=kafka-server:9092
+      - SPRING_KAFKA_PRODUCER_BOOTSTRAP_SERVERS=kafka-server:9092
+    hostname: mca-backend
+    depends_on:
+      kafka-server:
+        condition: service_healthy
+    healthcheck:
+      test: [ "CMD", "nc", "-vz", "mca-backend", "9092" ]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+
+  zookeeper-server:
+    image: docker.io/bitnami/zookeeper:3.7.0
+    container_name: zookeeper-server
+    ports:
+      - "2181:2181"
+    environment:
+      - ALLOW_ANONYMOUS_LOGIN=yes
+    restart: unless-stopped
+    networks:
+      - default
+    hostname: zookeeper-server
+    healthcheck:
+      test: [ "CMD", "nc", "-vz", "zookeeper-server", "2181" ]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
+
+  kafka-server:
+    image: wurstmeister/kafka:2.13-2.8.1
+    container_name: kafka-server
+    expose:
+      - "19093/tcp"
+      - "9092/tcp"
+    ports:
+      - "19093:19093"
+      - "9092:9092"
+    environment:
+      environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ADVERTISED_HOST_NAME: host.docker.internal
+      KAFKA_ZOOKEEPER_CONNECT: host.docker.internal:2181
+      KAFKA_CREATE_TOPICS: "MCA:1:1"
+    restart: unless-stopped
+    networks:
+      - default
+    hostname: kafka-server
+    depends_on:
+      zookeeper-server:
+        condition: service_healthy
+    healthcheck:
+      test: [ "CMD", "nc", "-vz", "kafka-server", "9092" ]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  kafdrop-server:
+    image: obsidiandynamics/kafdrop:latest
+    container_name: kafdrop-server
+    expose:
+      - "9011/tcp"
+    ports:
+      - 9011:9000
+    environment:
+      - KAFKA_BROKERCONNECT=kafka-server:9092
+    restart: unless-stopped
+    networks:
+      - default
+    depends_on:
+      - kafka-server
+    labels:
+      - "traefik.port=80"
+      - "traefik.enable=true"
+      - "traefik.http.services.kafdrop.loadbalancer.server.port=9000"
+      - "traefik.http.routers.kafdrop.rule=Host(`kafdrop.localhost`)"
+      - "traefik.http.routers.kafdrop.entrypoints=web"
+
+      
+  

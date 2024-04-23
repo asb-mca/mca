@@ -1,0 +1,28 @@
+<?xml version="1.0"?>
+<!DOCTYPE hibernate-mapping PUBLIC
+        "-//Hibernate/Hibernate Mapping DTD 3.0//EN"
+        "http://www.hibernate.org/dtd/hibernate-configuration-3.0.dtd">
+<hibernate-mapping>
+    <class name="com.mca.domain.VideoGame" table="VIDEOGAME">
+        <id name="id" type="java.lang.Integer">
+            <column name="ID" />
+            <generator class="identity" />
+        </id>
+        <property name="title" type="string">
+            <column name="TITLE" not-null="true" />
+        </property>
+        <property name="id" type="java.lang.Integer">
+            <column name="RELEVANCE" />
+        </property>
+        <property name="releaseDate" type="java.time.LocalDateTime">
+            <column name="RELEASE_DATE" />
+        </property>
+        <many-to-one name="saga" class="com.mca.domain.VideoGameSaga" fetch="join" cascade="persist">
+            <column name="SAGA_ID" not-null="true" />
+        </many-to-one>
+        <many-to-one name="genre" class="com.mca.domain.Genre" fetch="join" cascade="persist">
+            <column name="GENRE_ID" not-null="true" />
+        </many-to-one>
+        <one-to-one name="stock" class="com.mca.domain.Stock" column="VIDEOGAME_ID" cascade="persist" />
+    </class>
+</hibernate-mapping>
